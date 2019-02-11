@@ -1,0 +1,13 @@
+apache-ant-1.9.6-bin.tar.bz2
+dist/**
+lib/**
+apache-ant-1.9.6/**
+build.xml
+build/**
+tmp/**
+**/*.orig
+**/*.swp
+src/main/java/amsitlab/**
+src/main/java/org/apache/tools/ant/Main.java
+src/main/java/org/apache/tools/ant/AntClassLoader.java.edit
+src/main/java/org/apache/tools/ant/launch/**
