@@ -1081,6 +1081,14 @@ public class AntClassLoader extends ClassLoader implements SubBuildListener, Clo
         if (theClass != null) {
             return theClass;
         }
+		/* try to load classes.dex in jar file for android dalvikvm */
+		final String loaderClassName = "dalvik.system.PathClassLoader";
+		theClass = resolveClassesDex(classname, loaderClassName);
+		if (theClass != null) {
+			log("Finding class "+ classname +" using "+ loaderClassName , Project.MSG_DEBUG);
+			return theClass;
+		}
+
         if (isParentFirst(classname)) {
             try {
                 theClass = findBaseClass(classname);
@@ -1102,13 +1110,38 @@ public class AntClassLoader extends ClassLoader implements SubBuildListener, Clo
                 theClass = findBaseClass(classname);
                 log("Class " + classname + " loaded from parent loader", Project.MSG_DEBUG);
             }
-        }
+		}
         if (resolve) {
+
             resolveClass(theClass);
         }
         return theClass;
     }
 
+	protected final Class<?> resolveClassesDex(String className, final String loaderClassName) {
+			/* Check android by searching dalvikvm executable file */
+		File file = new File("/system/bin/dalvikvm");
+		if (!file.exists()) return null; // continue to next resolver
+
+		try{
+			String classpath = getClasspath();
+			log("Try to load classes.dex using " + loaderClassName + " with class path " + classpath, Project.MSG_DEBUG);
+			Class<?> loaderClass = Class.forName(loaderClassName);
+			Class<?>[] params = new Class[]{ String.class, ClassLoader.class };
+			Constructor<?> constructor = loaderClass.getDeclaredConstructor(params);
+			Object[] args = new Object[]{classpath, Thread.currentThread().getContextClassLoader()};
+			Object loader = constructor.newInstance(args);
+			if ( loader != null && (loader instanceof ClassLoader)) {
+				Class<?> theClass = ((ClassLoader)loader).loadClass(className);
+				return theClass;
+			} 				
+		} catch (Exception e) {
+			log("Failed to load class using " + loaderClassName, Project.MSG_DEBUG);
+			e.printStackTrace();
+		}
+			
+		return null; // continue to next resolver
+	}
     /**
      * Converts the class dot notation to a filesystem equivalent for
      * searching purposes.
@@ -1374,7 +1407,7 @@ public class AntClassLoader extends ClassLoader implements SubBuildListener, Clo
                     return getClassFromStream(stream, name, pathComponent);
                 }
             } catch (final SecurityException se) {
-                throw se;
+                //throw se;
             } catch (final IOException ioe) {
                 // ioe.printStackTrace();
                 log("Exception reading component " + pathComponent + " (reason: "
