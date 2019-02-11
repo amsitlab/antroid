@@ -1407,7 +1407,7 @@ public class AntClassLoader extends ClassLoader implements SubBuildListener, Clo
                     return getClassFromStream(stream, name, pathComponent);
                 }
             } catch (final SecurityException se) {
-                //throw se;
+                throw se;
             } catch (final IOException ioe) {
                 // ioe.printStackTrace();
                 log("Exception reading component " + pathComponent + " (reason: "
